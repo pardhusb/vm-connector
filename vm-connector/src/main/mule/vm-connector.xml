@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="c5745e62-e2d7-4512-b473-8b5eb812a048" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<vm:config name="VM_Config" doc:name="VM Config" doc:id="b23f8520-5b98-433d-ab53-123ce724f9be" >
+		<vm:queues >
+			<vm:queue queueName="customerqueue" />
+		</vm:queues>
+	</vm:config>
+	<flow name="vm-connectorFlow" doc:id="d3ea4f85-733d-4994-8ab3-e73b3ea0b875" >
+		<http:listener doc:name="publish-customers" doc:id="ff12ce2d-2626-4795-b5d0-037fb644b111" config-ref="HTTP_Listener_config" path="/publishcustomer" allowedMethods="POST"/>
+		<logger level="INFO" doc:name="Logger" doc:id="689ffba5-5945-409a-85f3-df7c93f23780" message="before publish"/>
+		<vm:publish-consume queueName="customerqueue" doc:name="Publish consume" doc:id="6ac0fac0-a4c1-4479-bacb-42fef22807be" config-ref="VM_Config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="ef19f2eb-1bc1-4d32-9e3f-6ac2a8a86c55" message="after publish"/>
+		<ee:transform doc:name="Transform Message" doc:id="74d3429f-6885-48db-bede-e19291fd486c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message" : "customer published successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="vm-connectorFlow1" doc:id="462573f2-1221-4388-bc45-fc012a1a06ef" >
+		<vm:listener queueName="customerqueue" doc:name="Listener" doc:id="e2686fed-e008-43bc-8a0e-29e1b84216b0" config-ref="VM_Config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="2d638e4b-f7ec-4dff-a625-3cd3c73083e7" message="#[payload]"/>
+	</flow>
+</mule>
